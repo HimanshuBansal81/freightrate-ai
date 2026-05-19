@@ -1,0 +1,60 @@
+services:
+  auth-service:
+    build:
+      context: ./services/auth-service
+    ports:
+      - "5001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      - postgres
+      - redis
+
+  quote-service:
+    build:
+      context: ./services/quote-service
+    ports:
+      - "5002:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      - postgres
+      - redis
+
+  ai-recommendation-service:
+    build:
+      context: ./services/ai-recommendation-service
+    ports:
+      - "8000:8000"
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: freightrate_ai
+      POSTGRES_USER: freightrate
+      POSTGRES_PASSWORD: freightrate_dev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth-service
+      - quote-service
+      - ai-recommendation-service
+
+volumes:
+  postgres-data:
