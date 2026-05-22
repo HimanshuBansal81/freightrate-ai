@@ -8,10 +8,9 @@ namespace quote_service.Services;
 public sealed class QuoteHistoryService(
     QuoteDbContext dbContext,
     IFreightCalculatorService freightCalculator,
-    ICarrierComparisonService carrierComparison) : IQuoteHistoryService
+    ICarrierComparisonService carrierComparison,
+    ICurrentUserService currentUser) : IQuoteHistoryService
 {
-    private const int TemporaryUserId = 0;
-
     public async Task<QuoteCompareResponse> CompareAndSaveAsync(
         QuoteCompareRequest request,
         CancellationToken cancellationToken)
@@ -66,7 +65,7 @@ public sealed class QuoteHistoryService(
 
         var quoteRequest = new QuoteRequest
         {
-            UserId = TemporaryUserId,
+            UserId = currentUser.UserId,
             OriginPincode = originPincode,
             DestinationPincode = destinationPincode,
             OriginZone = originZone.ZoneName,
@@ -114,9 +113,18 @@ public sealed class QuoteHistoryService(
 
     public async Task<IReadOnlyCollection<QuoteHistoryResponse>> GetRecentQuotesAsync(CancellationToken cancellationToken)
     {
-        var quoteRequests = await dbContext.QuoteRequests
+        var query = dbContext.QuoteRequests
             .AsNoTracking()
             .Include(request => request.QuoteOptions)
+            .AsQueryable();
+
+        if (!currentUser.IsAdmin)
+        {
+            var userId = currentUser.UserId;
+            query = query.Where(request => request.UserId == userId);
+        }
+
+        var quoteRequests = await query
             .OrderByDescending(request => request.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -125,10 +133,18 @@ public sealed class QuoteHistoryService(
 
     public async Task<QuoteHistoryResponse?> GetQuoteAsync(int id, CancellationToken cancellationToken)
     {
-        var quoteRequest = await dbContext.QuoteRequests
+        var query = dbContext.QuoteRequests
             .AsNoTracking()
             .Include(request => request.QuoteOptions)
-            .SingleOrDefaultAsync(request => request.Id == id, cancellationToken);
+            .Where(request => request.Id == id);
+
+        if (!currentUser.IsAdmin)
+        {
+            var userId = currentUser.UserId;
+            query = query.Where(request => request.UserId == userId);
+        }
+
+        var quoteRequest = await query.SingleOrDefaultAsync(cancellationToken);
 
         return quoteRequest is null ? null : ToHistoryResponse(quoteRequest);
     }

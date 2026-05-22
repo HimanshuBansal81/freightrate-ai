@@ -25,6 +25,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=freightrate_quote;Username=postgres;Password=postgres
+      Jwt__Secret: replace-with-a-long-development-secret-key-at-least-32-characters
+      Jwt__Issuer: FreightRateAI.Auth
+      Jwt__Audience: FreightRateAI.Services
     depends_on:
       - postgres
       - redis
