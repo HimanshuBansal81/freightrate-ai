@@ -64,6 +64,13 @@ builder.Services.AddScoped<IFreightCalculatorService, FreightCalculatorService>(
 builder.Services.AddScoped<ICarrierComparisonService, CarrierComparisonService>();
 builder.Services.AddScoped<IQuoteHistoryService, QuoteHistoryService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddSingleton<IRedisCacheService, RedisCacheService>();
+builder.Services.AddHttpClient<IAiRecommendationClient, AiRecommendationClient>((serviceProvider, client) =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var baseUrl = configuration["AiService:BaseUrl"] ?? "http://ai-recommendation-service:8000";
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 var app = builder.Build();
 
@@ -80,19 +87,34 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "quot
 .WithName("HealthCheck")
 .WithOpenApi();
 
-app.MapGet("/api/carriers", async (QuoteDbContext dbContext) =>
-    await dbContext.Carriers
+app.MapGet("/api/carriers", async Task<IReadOnlyCollection<ActiveCarrierDto>> (
+    QuoteDbContext dbContext,
+    IRedisCacheService cache,
+    CancellationToken cancellationToken) =>
+{
+    const string cacheKey = "carriers:active";
+    var cachedCarriers = await cache.GetAsync<IReadOnlyCollection<ActiveCarrierDto>>(cacheKey, cancellationToken);
+    if (cachedCarriers is not null)
+    {
+        return cachedCarriers;
+    }
+
+    var carriers = await dbContext.Carriers
         .Where(carrier => carrier.IsActive)
         .OrderBy(carrier => carrier.Name)
-        .Select(carrier => new
+        .Select(carrier => new ActiveCarrierDto
         {
-            carrier.Id,
-            carrier.Name,
-            carrier.Code,
-            carrier.ServiceType,
-            carrier.IsActive
+            Id = carrier.Id,
+            Name = carrier.Name,
+            Code = carrier.Code,
+            ServiceType = carrier.ServiceType,
+            IsActive = carrier.IsActive
         })
-        .ToListAsync());
+        .ToListAsync(cancellationToken);
+
+    await cache.SetAsync(cacheKey, carriers, TimeSpan.FromHours(1), cancellationToken);
+    return carriers;
+});
 
 app.MapGet("/api/zones", async (QuoteDbContext dbContext) =>
     await dbContext.ZoneMappings

@@ -9,7 +9,9 @@ public sealed class QuoteHistoryService(
     QuoteDbContext dbContext,
     IFreightCalculatorService freightCalculator,
     ICarrierComparisonService carrierComparison,
-    ICurrentUserService currentUser) : IQuoteHistoryService
+    ICurrentUserService currentUser,
+    IRedisCacheService cache,
+    IAiRecommendationClient aiRecommendationClient) : IQuoteHistoryService
 {
     public async Task<QuoteCompareResponse> CompareAndSaveAsync(
         QuoteCompareRequest request,
@@ -21,31 +23,19 @@ public sealed class QuoteHistoryService(
         var originPincode = request.OriginPincode!.Trim();
         var destinationPincode = request.DestinationPincode!.Trim();
 
-        var originZone = await dbContext.ZoneMappings
-            .AsNoTracking()
-            .SingleOrDefaultAsync(zone => zone.IsActive && zone.Pincode == originPincode, cancellationToken);
+        var originZone = await GetZoneMappingAsync(originPincode, cancellationToken);
         if (originZone is null)
         {
             throw new QuoteBusinessException($"No active zone mapping found for origin pincode {originPincode}.");
         }
 
-        var destinationZone = await dbContext.ZoneMappings
-            .AsNoTracking()
-            .SingleOrDefaultAsync(zone => zone.IsActive && zone.Pincode == destinationPincode, cancellationToken);
+        var destinationZone = await GetZoneMappingAsync(destinationPincode, cancellationToken);
         if (destinationZone is null)
         {
             throw new QuoteBusinessException($"No active zone mapping found for destination pincode {destinationPincode}.");
         }
 
-        var rateRules = await dbContext.CarrierRateRules
-            .AsNoTracking()
-            .Include(rule => rule.Carrier)
-            .Where(rule =>
-                rule.IsActive
-                && rule.Carrier.IsActive
-                && rule.OriginZone == originZone.ZoneName
-                && rule.DestinationZone == destinationZone.ZoneName)
-            .ToListAsync(cancellationToken);
+        var rateRules = await GetRateRulesAsync(originZone.ZoneName, destinationZone.ZoneName, cancellationToken);
 
         if (rateRules.Count == 0)
         {
@@ -60,8 +50,11 @@ public sealed class QuoteHistoryService(
             .ThenBy(option => option.EstimatedDeliveryDays)
             .ToList();
         var recommendedOption = carrierComparison.SelectRecommendedOption(options, preference);
-        var aiExplanation =
-            $"{recommendedOption.Carrier} was selected because it best matches your {preference} preference based on calculated price and delivery time.";
+        var aiExplanation = await aiRecommendationClient.GetExplanationAsync(
+            preference,
+            recommendedOption,
+            options,
+            cancellationToken);
 
         var quoteRequest = new QuoteRequest
         {
@@ -109,6 +102,83 @@ public sealed class QuoteHistoryService(
             AiExplanation = quoteRequest.AiExplanation!,
             Options = options
         };
+    }
+
+    private async Task<ZoneMappingDto?> GetZoneMappingAsync(string pincode, CancellationToken cancellationToken)
+    {
+        var cacheKey = $"zone:pincode:{pincode}";
+        var cachedZone = await cache.GetAsync<ZoneMappingDto>(cacheKey, cancellationToken);
+        if (cachedZone is not null)
+        {
+            return cachedZone;
+        }
+
+        var zone = await dbContext.ZoneMappings
+            .AsNoTracking()
+            .Where(existingZone => existingZone.IsActive && existingZone.Pincode == pincode)
+            .Select(existingZone => new ZoneMappingDto
+            {
+                Id = existingZone.Id,
+                Pincode = existingZone.Pincode,
+                ZoneName = existingZone.ZoneName,
+                City = existingZone.City,
+                State = existingZone.State,
+                IsActive = existingZone.IsActive
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (zone is not null)
+        {
+            await cache.SetAsync(cacheKey, zone, TimeSpan.FromHours(6), cancellationToken);
+        }
+
+        return zone;
+    }
+
+    private async Task<IReadOnlyCollection<CarrierRateRuleDto>> GetRateRulesAsync(
+        string originZone,
+        string destinationZone,
+        CancellationToken cancellationToken)
+    {
+        var cacheKey = $"rate-rules:{originZone}:{destinationZone}";
+        var cachedRules = await cache.GetAsync<IReadOnlyCollection<CarrierRateRuleDto>>(cacheKey, cancellationToken);
+        if (cachedRules is not null)
+        {
+            return cachedRules;
+        }
+
+        var rateRules = await dbContext.CarrierRateRules
+            .AsNoTracking()
+            .Include(rule => rule.Carrier)
+            .Where(rule =>
+                rule.IsActive
+                && rule.Carrier.IsActive
+                && rule.OriginZone == originZone
+                && rule.DestinationZone == destinationZone)
+            .Select(rule => new CarrierRateRuleDto
+            {
+                Id = rule.Id,
+                Carrier = new ActiveCarrierDto
+                {
+                    Id = rule.Carrier.Id,
+                    Name = rule.Carrier.Name,
+                    Code = rule.Carrier.Code,
+                    ServiceType = rule.Carrier.ServiceType,
+                    IsActive = rule.Carrier.IsActive
+                },
+                OriginZone = rule.OriginZone,
+                DestinationZone = rule.DestinationZone,
+                BaseRate = rule.BaseRate,
+                PerKgRate = rule.PerKgRate,
+                FuelSurchargePercent = rule.FuelSurchargePercent,
+                GstPercent = rule.GstPercent,
+                EstimatedDeliveryDays = rule.EstimatedDeliveryDays,
+                IsActive = rule.IsActive
+            })
+            .ToListAsync(cancellationToken);
+
+        await cache.SetAsync(cacheKey, rateRules, TimeSpan.FromMinutes(30), cancellationToken);
+        return rateRules;
     }
 
     public async Task<IReadOnlyCollection<QuoteHistoryResponse>> GetRecentQuotesAsync(CancellationToken cancellationToken)
