@@ -1,17 +1,69 @@
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using quote_service.Data;
 using quote_service.Models;
 using quote_service.Services;
+using quote_service.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter a valid JWT bearer token."
+    });
+    options.OperationFilter<AuthorizeOperationFilter>();
+});
 builder.Services.AddDbContext<QuoteDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("Jwt:Secret is required.");
+var jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = jwtKey,
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = ClaimTypes.Role,
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ShipperOrAdmin", policy =>
+        policy.RequireAuthenticatedUser().RequireRole("Shipper", "Admin"));
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAuthenticatedUser().RequireRole("Admin"));
+});
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IFreightCalculatorService, FreightCalculatorService>();
 builder.Services.AddScoped<ICarrierComparisonService, CarrierComparisonService>();
 builder.Services.AddScoped<IQuoteHistoryService, QuoteHistoryService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 var app = builder.Build();
 
@@ -20,6 +72,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy", service = "quote-service" }))
 .WithName("HealthCheck")
@@ -79,7 +134,8 @@ app.MapGet("/api/admin/rate-rules", async (QuoteDbContext dbContext) =>
             rule.EstimatedDeliveryDays,
             rule.IsActive
         })
-        .ToListAsync());
+        .ToListAsync())
+    .RequireAuthorization("AdminOnly");
 
 app.MapPost("/api/quotes/compare", async (
     QuoteCompareRequest request,
@@ -102,12 +158,14 @@ app.MapPost("/api/quotes/compare", async (
     {
         return Results.UnprocessableEntity(new { message = exception.Message });
     }
-});
+})
+.RequireAuthorization("ShipperOrAdmin");
 
 app.MapGet("/api/quotes/history", async (
     IQuoteHistoryService quoteHistoryService,
     CancellationToken cancellationToken) =>
-    Results.Ok(await quoteHistoryService.GetRecentQuotesAsync(cancellationToken)));
+    Results.Ok(await quoteHistoryService.GetRecentQuotesAsync(cancellationToken)))
+    .RequireAuthorization("ShipperOrAdmin");
 
 app.MapGet("/api/quotes/{id:int}", async (
     int id,
@@ -116,7 +174,8 @@ app.MapGet("/api/quotes/{id:int}", async (
 {
     var quote = await quoteHistoryService.GetQuoteAsync(id, cancellationToken);
     return quote is null ? Results.NotFound(new { message = $"Quote {id} was not found." }) : Results.Ok(quote);
-});
+})
+.RequireAuthorization("ShipperOrAdmin");
 
 await QuoteDatabaseInitializer.InitializeAsync(app);
 
