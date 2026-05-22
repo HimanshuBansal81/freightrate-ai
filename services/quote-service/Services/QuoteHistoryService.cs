@@ -26,13 +26,19 @@ public sealed class QuoteHistoryService(
         var originZone = await GetZoneMappingAsync(originPincode, cancellationToken);
         if (originZone is null)
         {
-            throw new QuoteBusinessException($"No active zone mapping found for origin pincode {originPincode}.");
+            throw new QuoteBusinessException(
+                QuoteErrorCodes.InvalidPincode,
+                "Origin pincode is not serviceable.",
+                [new ErrorDetail { Field = "originPincode", Issue = $"No zone mapping found for pincode {originPincode}." }]);
         }
 
         var destinationZone = await GetZoneMappingAsync(destinationPincode, cancellationToken);
         if (destinationZone is null)
         {
-            throw new QuoteBusinessException($"No active zone mapping found for destination pincode {destinationPincode}.");
+            throw new QuoteBusinessException(
+                QuoteErrorCodes.InvalidPincode,
+                "Destination pincode is not serviceable.",
+                [new ErrorDetail { Field = "destinationPincode", Issue = $"No zone mapping found for pincode {destinationPincode}." }]);
         }
 
         var rateRules = await GetRateRulesAsync(originZone.ZoneName, destinationZone.ZoneName, cancellationToken);
@@ -40,7 +46,15 @@ public sealed class QuoteHistoryService(
         if (rateRules.Count == 0)
         {
             throw new QuoteBusinessException(
-                $"No active carrier rate rules found for {originZone.ZoneName} to {destinationZone.ZoneName}.");
+                QuoteErrorCodes.NoActiveRateRules,
+                $"No active carrier rate rules found for {originZone.ZoneName} to {destinationZone.ZoneName}.",
+                [
+                    new ErrorDetail
+                    {
+                        Field = "route",
+                        Issue = $"No active rate rules found for {originZone.ZoneName} to {destinationZone.ZoneName}."
+                    }
+                ]);
         }
 
         var weights = freightCalculator.CalculateWeights(request);
@@ -221,41 +235,62 @@ public sealed class QuoteHistoryService(
 
     private static void Validate(QuoteCompareRequest request)
     {
-        var errors = new Dictionary<string, string[]>();
+        var pincodeErrors = new List<ErrorDetail>();
+        var weightErrors = new List<ErrorDetail>();
+        var dimensionErrors = new List<ErrorDetail>();
 
         if (string.IsNullOrWhiteSpace(request.OriginPincode))
         {
-            errors["OriginPincode"] = ["OriginPincode is required."];
+            pincodeErrors.Add(new ErrorDetail { Field = "originPincode", Issue = "OriginPincode is required." });
         }
 
         if (string.IsNullOrWhiteSpace(request.DestinationPincode))
         {
-            errors["DestinationPincode"] = ["DestinationPincode is required."];
+            pincodeErrors.Add(new ErrorDetail { Field = "destinationPincode", Issue = "DestinationPincode is required." });
         }
 
         if (request.ActualWeightKg <= 0)
         {
-            errors["ActualWeightKg"] = ["ActualWeightKg must be greater than 0."];
+            weightErrors.Add(new ErrorDetail { Field = "actualWeightKg", Issue = "ActualWeightKg must be greater than 0." });
         }
 
         if (request.LengthCm <= 0)
         {
-            errors["LengthCm"] = ["LengthCm must be greater than 0."];
+            dimensionErrors.Add(new ErrorDetail { Field = "lengthCm", Issue = "LengthCm must be greater than 0." });
         }
 
         if (request.WidthCm <= 0)
         {
-            errors["WidthCm"] = ["WidthCm must be greater than 0."];
+            dimensionErrors.Add(new ErrorDetail { Field = "widthCm", Issue = "WidthCm must be greater than 0." });
         }
 
         if (request.HeightCm <= 0)
         {
-            errors["HeightCm"] = ["HeightCm must be greater than 0."];
+            dimensionErrors.Add(new ErrorDetail { Field = "heightCm", Issue = "HeightCm must be greater than 0." });
         }
 
-        if (errors.Count > 0)
+        if (pincodeErrors.Count > 0)
         {
-            throw new QuoteValidationException(errors);
+            throw new QuoteValidationException(
+                QuoteErrorCodes.InvalidPincode,
+                "Pincode validation failed.",
+                pincodeErrors);
+        }
+
+        if (weightErrors.Count > 0)
+        {
+            throw new QuoteValidationException(
+                QuoteErrorCodes.InvalidWeight,
+                "Weight validation failed.",
+                weightErrors);
+        }
+
+        if (dimensionErrors.Count > 0)
+        {
+            throw new QuoteValidationException(
+                QuoteErrorCodes.InvalidDimensions,
+                "Dimension validation failed.",
+                dimensionErrors);
         }
     }
 

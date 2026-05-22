@@ -1,9 +1,28 @@
+using quote_service.Models;
+
 namespace quote_service.Services;
 
-public sealed class QuoteValidationException(IReadOnlyDictionary<string, string[]> errors)
-    : Exception("Quote request validation failed.")
+public class QuoteApiException(
+    int statusCode,
+    string errorCode,
+    string message,
+    IReadOnlyCollection<ErrorDetail>? details = null) : Exception(message)
 {
-    public IReadOnlyDictionary<string, string[]> Errors { get; } = errors;
+    public int StatusCode { get; } = statusCode;
+    public string ErrorCode { get; } = errorCode;
+    public IReadOnlyCollection<ErrorDetail> Details { get; } = details ?? [];
 }
 
-public sealed class QuoteBusinessException(string message) : Exception(message);
+public sealed class QuoteValidationException(
+    string errorCode,
+    string message,
+    IReadOnlyCollection<ErrorDetail> details,
+    int statusCode = StatusCodes.Status422UnprocessableEntity)
+    : QuoteApiException(statusCode, errorCode, message, details);
+
+public sealed class QuoteBusinessException(
+    string errorCode,
+    string message,
+    IReadOnlyCollection<ErrorDetail>? details = null,
+    int statusCode = StatusCodes.Status422UnprocessableEntity)
+    : QuoteApiException(statusCode, errorCode, message, details);

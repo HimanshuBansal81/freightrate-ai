@@ -21,10 +21,11 @@ public sealed class CarrierComparisonService : ICarrierComparisonService
         var normalized = preference.Trim();
         if (!AllowedPreferences.Contains(normalized))
         {
-            throw new QuoteValidationException(new Dictionary<string, string[]>
-            {
-                ["Preference"] = ["Preference must be Cheapest, Fastest, or Balanced."]
-            });
+            throw new QuoteValidationException(
+                QuoteErrorCodes.InvalidPreference,
+                "Preference must be Cheapest, Fastest, or Balanced.",
+                [new ErrorDetail { Field = "preference", Issue = "Allowed values are Cheapest, Fastest, or Balanced." }],
+                StatusCodes.Status400BadRequest);
         }
 
         return AllowedPreferences.Single(allowed =>
@@ -35,7 +36,9 @@ public sealed class CarrierComparisonService : ICarrierComparisonService
     {
         if (options.Count == 0)
         {
-            throw new QuoteBusinessException("No quote options are available for comparison.");
+            throw new QuoteBusinessException(
+                QuoteErrorCodes.NoActiveRateRules,
+                "No quote options are available for comparison.");
         }
 
         return preference switch
