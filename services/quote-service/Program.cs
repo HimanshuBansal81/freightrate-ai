@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using quote_service.Data;
+using quote_service.Middleware;
 using quote_service.Models;
 using quote_service.Services;
 using quote_service.Swagger;
@@ -50,6 +51,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             RoleClaimType = ClaimTypes.Role,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var response = StandardErrorResponseFactory.Create(
+                    context.HttpContext,
+                    StatusCodes.Status401Unauthorized,
+                    QuoteErrorCodes.Unauthorized,
+                    "Authentication is required or the bearer token is invalid.");
+                await context.Response.WriteAsJsonAsync(response);
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                var response = StandardErrorResponseFactory.Create(
+                    context.HttpContext,
+                    StatusCodes.Status403Forbidden,
+                    QuoteErrorCodes.Forbidden,
+                    "You do not have permission to access this resource.");
+                await context.Response.WriteAsJsonAsync(response);
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -80,6 +107,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -163,24 +191,7 @@ app.MapPost("/api/quotes/compare", async (
     QuoteCompareRequest request,
     IQuoteHistoryService quoteHistoryService,
     CancellationToken cancellationToken) =>
-{
-    try
-    {
-        return Results.Ok(await quoteHistoryService.CompareAndSaveAsync(request, cancellationToken));
-    }
-    catch (QuoteValidationException exception)
-    {
-        return Results.BadRequest(new
-        {
-            message = exception.Message,
-            errors = exception.Errors
-        });
-    }
-    catch (QuoteBusinessException exception)
-    {
-        return Results.UnprocessableEntity(new { message = exception.Message });
-    }
-})
+    Results.Ok(await quoteHistoryService.CompareAndSaveAsync(request, cancellationToken)))
 .RequireAuthorization("ShipperOrAdmin");
 
 app.MapGet("/api/quotes/history", async (
@@ -192,10 +203,21 @@ app.MapGet("/api/quotes/history", async (
 app.MapGet("/api/quotes/{id:int}", async (
     int id,
     IQuoteHistoryService quoteHistoryService,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
     var quote = await quoteHistoryService.GetQuoteAsync(id, cancellationToken);
-    return quote is null ? Results.NotFound(new { message = $"Quote {id} was not found." }) : Results.Ok(quote);
+    if (quote is not null)
+    {
+        return Results.Ok(quote);
+    }
+
+    var error = StandardErrorResponseFactory.Create(
+        httpContext,
+        StatusCodes.Status404NotFound,
+        QuoteErrorCodes.QuoteNotFound,
+        $"Quote {id} was not found.");
+    return Results.NotFound(error);
 })
 .RequireAuthorization("ShipperOrAdmin");
 
