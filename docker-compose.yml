@@ -28,6 +28,9 @@ services:
       Jwt__Secret: replace-with-a-long-development-secret-key-at-least-32-characters
       Jwt__Issuer: FreightRateAI.Auth
       Jwt__Audience: FreightRateAI.Services
+      Redis__ConnectionString: redis:6379
+      AiService__BaseUrl: http://ai-recommendation-service:8000
+      AiService__TimeoutSeconds: 3
     depends_on:
       - postgres
       - redis
@@ -37,6 +40,9 @@ services:
       context: ./services/ai-recommendation-service
     ports:
       - "8000:8000"
+    environment:
+      AI_PROVIDER: none
+      AI_TIMEOUT_SECONDS: 5
 
   postgres:
     image: postgres:16-alpine

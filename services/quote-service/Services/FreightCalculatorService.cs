@@ -1,4 +1,3 @@
-using quote_service.Entities;
 using quote_service.Models;
 
 namespace quote_service.Services;
@@ -21,7 +20,7 @@ public sealed class FreightCalculatorService : IFreightCalculatorService
         };
     }
 
-    public CarrierQuoteOptionDto CalculateOption(CarrierRateRule rule, decimal chargeableWeightKg)
+    public CarrierQuoteOptionDto CalculateOption(CarrierRateRuleDto rule, decimal chargeableWeightKg)
     {
         var baseFreight = RoundMoney(rule.BaseRate + chargeableWeightKg * rule.PerKgRate);
         var fuelSurcharge = RoundMoney(baseFreight * rule.FuelSurchargePercent / 100m);
