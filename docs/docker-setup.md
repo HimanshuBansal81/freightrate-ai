@@ -2,20 +2,28 @@
 
 ## Local Environment Setup
 
-Create a local environment file from the tracked example:
+Copy the safe local environment template:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` locally if needed. Never commit `.env`.
+Edit `.env` locally and set `JWT_SECRET` to a local development value of at least 32 characters. Never commit `.env`.
 
-The local demo works with `AI_PROVIDER=none`. Add real provider keys only to your local `.env` file or a cloud secret manager, never to source control.
+`AI_PROVIDER=none` runs the project in fallback explanation mode without real API keys. Add real provider keys only to your local `.env` file or a cloud secret manager, never to source control.
 
-Run from the repository root:
+Start services from the repository root:
 
 ```bash
 docker compose up --build -d
+```
+
+Verify the stack:
+
+```bash
+curl http://localhost:8080/auth/health
+curl http://localhost:8080/quotes/health
+curl http://localhost:8080/ai/health
 ```
 
 Stop the stack:
@@ -58,6 +66,14 @@ Fix:
 ```bash
 open -a Docker
 docker compose ps
+```
+
+### JWT_SECRET is required
+
+If Docker Compose reports that `JWT_SECRET` is required, copy `.env.example` to `.env` and set `JWT_SECRET`:
+
+```bash
+cp .env.example .env
 ```
 
 ### Nginx 502 or wrong service response

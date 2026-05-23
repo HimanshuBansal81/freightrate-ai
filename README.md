@@ -65,15 +65,27 @@ Prerequisites:
 - .NET 8 SDK
 - `curl` or Postman
 
-### Local environment setup
+### Local Environment Setup
 
-Create a local environment file from the tracked example:
+This repository commits only `.env.example` so reviewers and contributors can understand required configuration without exposing secrets. Runtime secrets are supplied through local `.env` files or cloud secret management.
+
+`.env.example` is a safe template for local development, not production configuration. Create a local environment file from the tracked example:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` locally if needed. Never commit `.env` or provider credentials.
+Edit `.env` locally:
+
+- Set `JWT_SECRET` to a local development value of at least 32 characters.
+- Keep `AI_PROVIDER=none` for fallback-only mode.
+- Add provider API keys locally only if testing a real AI provider.
+
+`.env` is ignored and must never be committed. Real secrets and API keys should never be stored in Git.
+
+Cloud deployment does not use committed env files. Configure runtime settings with Cloud Run environment variables and store secrets in Google Secret Manager.
+
+If any real secret or API key was ever pushed to GitHub, rotate or revoke it. Removing it from the latest commit is not enough because Git history may retain it.
 
 Start the stack from the repository root:
 
@@ -196,8 +208,6 @@ repo-root/
 ```
 
 ## Production Notes
-
-If any real secret was pushed to GitHub, rotate or revoke it immediately from the provider dashboard. Removing it from the latest commit is not enough because it may remain in Git history.
 
 Low-cost deployment path:
 
