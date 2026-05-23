@@ -7,8 +7,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${AUTH_DB_CONNECTION:-Host=postgres;Port=5432;Database=freightrate_auth;Username=postgres;Password=postgres}
-      Jwt__Secret: ${JWT_SECRET:-replace-with-a-long-development-secret-key-at-least-32-characters}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${AUTH_DB_NAME:-freightrate_auth};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.example to .env and set JWT_SECRET.}
       Jwt__Issuer: ${JWT_ISSUER:-FreightRateAI.Auth}
       Jwt__Audience: ${JWT_AUDIENCE:-FreightRateAI.Services}
       Jwt__ExpiryMinutes: ${JWT_EXPIRY_MINUTES:-60}
@@ -24,10 +24,11 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${QUOTE_DB_CONNECTION:-Host=postgres;Port=5432;Database=freightrate_quote;Username=postgres;Password=postgres}
-      Jwt__Secret: ${JWT_SECRET:-replace-with-a-long-development-secret-key-at-least-32-characters}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${QUOTE_DB_NAME:-freightrate_quote};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      Jwt__Secret: ${JWT_SECRET:?JWT_SECRET is required. Copy .env.example to .env and set JWT_SECRET.}
       Jwt__Issuer: ${JWT_ISSUER:-FreightRateAI.Auth}
       Jwt__Audience: ${JWT_AUDIENCE:-FreightRateAI.Services}
+      Jwt__ExpiryMinutes: ${JWT_EXPIRY_MINUTES:-60}
       Redis__ConnectionString: ${REDIS_CONNECTION_STRING:-redis:6379}
       AiService__BaseUrl: ${AI_SERVICE_BASE_URL:-http://ai-recommendation-service:8000}
       AiService__TimeoutSeconds: ${AI_SERVICE_TIMEOUT_SECONDS:-3}
@@ -54,10 +55,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-freightrate_auth}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-freightrate}
+      AUTH_DB_NAME: ${AUTH_DB_NAME:-freightrate_auth}
+      QUOTE_DB_NAME: ${QUOTE_DB_NAME:-freightrate_quote}
     volumes:
+      - ./services/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
       - postgres-data:/var/lib/postgresql/data
 
   redis:
