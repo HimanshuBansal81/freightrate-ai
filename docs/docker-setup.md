@@ -1,5 +1,17 @@
 # Docker Setup
 
+## Local Environment Setup
+
+Create a local environment file from the tracked example:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` locally if needed. Never commit `.env`.
+
+The local demo works with `AI_PROVIDER=none`. Add real provider keys only to your local `.env` file or a cloud secret manager, never to source control.
+
 Run from the repository root:
 
 ```bash
@@ -17,6 +29,8 @@ Check config:
 ```bash
 docker compose config
 ```
+
+If any real secret was pushed to GitHub, rotate or revoke it immediately from the provider dashboard. Removing it from the latest commit is not enough because it may remain in Git history.
 
 ## Published Ports
 

@@ -65,6 +65,16 @@ Prerequisites:
 - .NET 8 SDK
 - `curl` or Postman
 
+### Local environment setup
+
+Create a local environment file from the tracked example:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` locally if needed. Never commit `.env` or provider credentials.
+
 Start the stack from the repository root:
 
 ```bash
@@ -78,6 +88,8 @@ curl http://localhost:8080/auth/health
 curl http://localhost:8080/quotes/health
 curl http://localhost:8080/ai/health
 ```
+
+For AI provider integration, the local demo works with `AI_PROVIDER=none`. Real provider keys must be added only to your local `.env` file or a cloud secret manager, never to source control.
 
 Direct service ports are also published:
 
@@ -184,6 +196,8 @@ repo-root/
 ```
 
 ## Production Notes
+
+If any real secret was pushed to GitHub, rotate or revoke it immediately from the provider dashboard. Removing it from the latest commit is not enough because it may remain in Git history.
 
 Low-cost deployment path:
 
