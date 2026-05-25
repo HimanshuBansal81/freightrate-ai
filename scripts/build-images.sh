@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Optional Cloud Run helper. Builds and pushes all service images to Google Artifact Registry.
+#
+# Required environment variables:
+#   GCP_PROJECT_ID
+#   GCP_REGION                Example: asia-south1
+#
+# The AWS deployment path uses scripts/aws-build-push-images.sh instead.
+
 if [[ -z "${GCP_PROJECT_ID:-}" ]]; then
   echo "GCP_PROJECT_ID is required." >&2
   exit 1

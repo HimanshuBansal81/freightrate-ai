@@ -38,16 +38,22 @@ Direct published ports are available for debugging:
 
 ## Cloud Routing
 
-For a low-cost cloud deployment, each service can run on Cloud Run and expose HTTPS endpoints directly or through an API Gateway.
+AWS ECS Fargate is the primary deployment target. In AWS, the local Nginx gateway maps to an Application Load Balancer with path-based listener rules:
 
-For a fuller GCP architecture:
+- `/auth/*` to the Auth Service target group
+- `/quotes/*` to the Quote Service target group
+- `/ai/*` to the AI Recommendation Service target group
 
-- API Gateway or HTTPS Load Balancer routes public traffic.
-- Cloud Run hosts service containers.
-- Cloud SQL or external managed PostgreSQL stores relational data.
-- Memorystore or Upstash provides Redis.
-- Secret Manager stores secrets and connection strings.
-- Cloud Logging and Monitoring collect observability data.
+Supporting managed services:
+
+- ECR stores container images.
+- ECS Fargate runs service containers.
+- RDS PostgreSQL stores relational data.
+- ElastiCache Redis provides managed caching.
+- AWS Secrets Manager stores secrets and connection strings.
+- CloudWatch Logs collects service logs.
+
+Google Cloud Run is documented separately as an optional alternative container deployment path, not the primary deployment architecture.
 
 ## Data Ownership
 

@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Build and push all FreightRate AI service images to Amazon ECR.
+#
+# Required environment variables:
+#   AWS_REGION                Example: ap-south-1
+#   AWS_ACCOUNT_ID            AWS account that owns the ECR repositories
+#   ECR_REPOSITORY_PREFIX     Example: freightrate-ai
+#
+# Expected ECR repositories:
+#   $ECR_REPOSITORY_PREFIX/auth-service
+#   $ECR_REPOSITORY_PREFIX/quote-service
+#   $ECR_REPOSITORY_PREFIX/ai-recommendation-service
+
 missing=0
 
 if [[ -z "${AWS_REGION:-}" ]]; then

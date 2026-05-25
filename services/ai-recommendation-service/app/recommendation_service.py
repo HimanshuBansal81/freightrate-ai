@@ -24,7 +24,7 @@ class RecommendationService:
             return build_fallback_explanation(request)
 
     async def _explain_with_openai(self, request: RecommendationExplanationRequest) -> str:
-        # Provider integration is intentionally deferred. The prompt is built here
-        # so adding a real client later has a narrow, testable insertion point.
+        # Pricing remains deterministic in Quote Service.
+        # Provider clients only generate explanation text.
         _ = build_prompt(request)
         return build_fallback_explanation(request)
