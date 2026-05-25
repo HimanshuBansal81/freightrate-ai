@@ -1,24 +1,22 @@
-# FreightRate AI — Cloud-Native Multi-Carrier Freight Quote System
+# FreightRate AI
 
-Cloud-native logistics pricing system that compares freight quotes across multiple carriers using volumetric weight, zone-based pricing, surcharge, GST, ETA, Redis caching, JWT auth, and AI-assisted recommendation explanations.
+Cloud-native multi-carrier freight quote backend that calculates deterministic freight prices and uses AI only to explain recommendations.
 
-## Architecture Overview
+## Architecture
 
-FreightRate AI is a backend MVP built as a small service-oriented monorepo:
+FreightRate AI is a clean service-oriented monorepo:
 
-- Auth Service: .NET 8 Web API for registration, login, JWTs, users, and roles.
-- Quote Service: .NET 8 Web API for deterministic freight pricing, quote history, Redis caching, JWT authorization, and AI explanation integration.
-- AI Recommendation Service: Python FastAPI service that explains backend-selected recommendations.
-- PostgreSQL: relational source of truth for users, quote data, carriers, zones, and rate rules.
-- Redis: read-through cache for active carriers, pincode-zone mapping, and lane rate rules.
-- Nginx: local path-based reverse proxy.
-- Docker Compose: local runtime.
-- AWS ECS Fargate: recommended primary cloud deployment target.
-- Google Cloud Run: optional alternative container deployment target.
+- Auth Service: .NET 8 API for registration, login, JWT issuance, users, and roles.
+- Quote Service: .NET 8 API for quote calculation, carrier comparison, quote history, Redis caching, and AI explanation integration.
+- AI Recommendation Service: Python FastAPI service for concise recommendation explanations.
+- PostgreSQL: source of truth for users, roles, carriers, zones, rate rules, quote requests, and quote options.
+- Redis: read-through cache for carrier, zone, and rate-rule reference data.
+- Nginx: local Docker Compose reverse proxy at `localhost:8080`.
+- AWS ECS Fargate: primary cloud deployment target, with Application Load Balancer path routing.
 
 ```mermaid
 flowchart LR
-    Client["User / Postman"] --> Nginx["Nginx :8080"]
+    Client["Client / Postman"] --> Nginx["Nginx :8080"]
     Nginx --> Auth["Auth Service (.NET 8)"]
     Nginx --> Quote["Quote Service (.NET 8)"]
     Nginx --> AI["AI Recommendation Service (FastAPI)"]
@@ -28,35 +26,34 @@ flowchart LR
     Quote --> AI
 ```
 
+## Tech Stack
+
+- .NET 8, ASP.NET Core, Entity Framework Core
+- Python, FastAPI, Pydantic
+- PostgreSQL, Redis
+- Docker, Docker Compose, Nginx
+- xUnit, GitHub Actions
+- AWS ECS Fargate, ECR, ALB, RDS, ElastiCache, Secrets Manager, CloudWatch
+
 ## Key Features
 
-- JWT authentication
-- Admin and Shipper roles
-- Multi-carrier quote comparison
-- Volumetric weight calculation
-- Chargeable weight selection
-- Zone-based pricing
-- Fuel surcharge calculation
-- GST calculation
-- Cheapest, Fastest, and Balanced recommendation modes
+- JWT authentication with Admin and Shipper roles
 - User-scoped quote history
+- Multi-carrier quote comparison
+- Volumetric and chargeable weight calculation
+- Zone-based pricing, fuel surcharge, and GST
+- Cheapest, Fastest, and Balanced recommendation modes
 - Redis caching with PostgreSQL fallback
-- AI explanation with deterministic fallback
+- AI-generated recommendation explanation with deterministic fallback
 - Standard API error response contract
-- Dockerized local development
-- Unit tests for core quote logic
+- Unit tests for quote logic, recommendation selection, Redis fallback, and AI fallback
+- GitHub Actions CI for .NET build/test, Docker Compose validation, and Python import checks
 
 ## What AI Does
 
-AI only explains the backend-selected recommendation. It receives structured quote results and returns a short explanation.
+AI explains the recommendation selected by the Quote Service. Pricing remains deterministic and auditable.
 
-AI does not:
-
-- Calculate prices
-- Modify quote amounts
-- Invent carriers
-- Override the backend recommendation
-- Become the source of truth for pricing
+AI does not calculate prices, modify quote amounts, invent carriers, override recommendations, or act as the source of truth for business decisions.
 
 ## Local Setup
 
@@ -66,27 +63,13 @@ Prerequisites:
 - .NET 8 SDK
 - `curl` or Postman
 
-### Local Environment Setup
-
-This repository commits only `.env.example` so reviewers and contributors can understand required configuration without exposing secrets. Runtime secrets are supplied through local `.env` files or cloud secret management.
-
-`.env.example` is a safe template for local development, not production configuration. Create a local environment file from the tracked example:
+Create a local environment file from the tracked template:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` locally:
-
-- Set `JWT_SECRET` to a local development value of at least 32 characters.
-- Keep `AI_PROVIDER=none` for fallback-only mode.
-- Add provider API keys locally only if testing a real AI provider.
-
-`.env` is ignored and must never be committed. Real secrets and API keys should never be stored in Git.
-
-Cloud deployment does not use committed env files. For AWS, configure runtime settings with ECS task environment variables and store secrets in AWS Secrets Manager. The GCP Cloud Run alternative uses Cloud Run environment variables and Google Secret Manager.
-
-If any real secret or API key was ever pushed to GitHub, rotate or revoke it. Removing it from the latest commit is not enough because Git history may retain it.
+Set `JWT_SECRET` in `.env` to a local development value of at least 32 characters. Keep `AI_PROVIDER=none` unless testing a real AI provider locally.
 
 Start the stack from the repository root:
 
@@ -94,7 +77,19 @@ Start the stack from the repository root:
 docker compose up --build -d
 ```
 
-Health checks:
+Local Docker Compose uses Nginx as a path-based reverse proxy:
+
+- Auth: `http://localhost:8080/auth`
+- Quote: `http://localhost:8080/quotes`
+- AI: `http://localhost:8080/ai`
+
+Direct debug ports are also published:
+
+- Auth Service: `http://localhost:5001`
+- Quote Service: `http://localhost:5002`
+- AI Recommendation Service: `http://localhost:8000`
+
+## Health Checks
 
 ```bash
 curl http://localhost:8080/auth/health
@@ -102,38 +97,9 @@ curl http://localhost:8080/quotes/health
 curl http://localhost:8080/ai/health
 ```
 
-For AI provider integration, the local demo works with `AI_PROVIDER=none`. Real provider keys must be added only to your local `.env` file or a cloud secret manager, never to source control.
+## API Examples
 
-Direct service ports are also published:
-
-- Auth Service: `http://localhost:5001`
-- Quote Service: `http://localhost:5002`
-- AI Recommendation Service: `http://localhost:8000`
-- Nginx gateway: `http://localhost:8080`
-
-## Cloud Deployment Status
-
-The local backend MVP is complete and AWS ECS Fargate is the recommended primary deployment path. Real AWS deployment still requires an AWS account, ECR repositories, ECS Fargate services, an Application Load Balancer, RDS PostgreSQL, managed Redis, Secrets Manager, CloudWatch Logs, and IAM setup.
-
-No production secrets are stored in Git. Use ECS task environment variables for non-secret configuration and AWS Secrets Manager for JWT secrets, database connection strings, Redis connection strings, and optional AI provider keys.
-
-Local Docker Compose uses Nginx for path-based reverse proxy routing at `localhost:8080`. AWS deployment should use an Application Load Balancer for managed path-based routing:
-
-- `/auth/*` -> Auth Service
-- `/quotes/*` -> Quote Service
-- `/ai/*` -> AI Recommendation Service
-
-Deployment references:
-
-- [AWS ECS Fargate deployment plan](docs/aws-deployment.md)
-- [AWS environment matrix](docs/aws-env-matrix.md)
-- [ECS task definition notes](docs/ecs-task-definition-notes.md)
-- Optional GCP alternative: [Cloud Run deployment guide](docs/cloud-run-deployment.md)
-- Optional GCP alternative: [Cloud environment variable matrix](docs/cloud-env-matrix.md)
-
-## Auth Flow
-
-Register a Shipper:
+Register a shipper:
 
 ```bash
 curl -sS -X POST http://localhost:8080/auth/api/auth/register \
@@ -146,7 +112,7 @@ curl -sS -X POST http://localhost:8080/auth/api/auth/register \
   }'
 ```
 
-Login:
+Login and capture a token:
 
 ```bash
 TOKEN=$(curl -sS -X POST http://localhost:8080/auth/api/auth/login \
@@ -157,7 +123,7 @@ TOKEN=$(curl -sS -X POST http://localhost:8080/auth/api/auth/login \
   }' | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
 ```
 
-## Quote Compare
+Compare quotes:
 
 ```bash
 curl -sS -X POST http://localhost:8080/quotes/api/quotes/compare \
@@ -174,7 +140,7 @@ curl -sS -X POST http://localhost:8080/quotes/api/quotes/compare \
   }'
 ```
 
-Important expected values for this sample:
+For this sample, the expected deterministic values are:
 
 - `volumetricWeightKg`: `6`
 - `chargeableWeightKg`: `8`
@@ -183,35 +149,73 @@ Important expected values for this sample:
 - BlueDart total: `284.97`
 - Balanced recommendation: `Xpressbees`
 
-## Other Useful Endpoints
-
-Public:
+Other useful endpoints:
 
 - `GET /quotes/api/carriers`
 - `GET /quotes/api/zones`
-- `POST /ai/api/recommendations/explain`
-
-Protected:
-
-- `POST /quotes/api/quotes/compare`
 - `GET /quotes/api/quotes/history`
 - `GET /quotes/api/quotes/{id}`
-
-Admin only:
-
 - `GET /quotes/api/admin/rate-rules`
+- `POST /ai/api/recommendations/explain`
 
 ## Testing
 
-Run Quote Service tests:
+Run the full .NET solution build and test suite:
 
 ```bash
-dotnet test services/quote-service.tests/quote-service.tests.csproj -v minimal
+dotnet build FreightRateAI.sln
+dotnet test FreightRateAI.sln
 ```
 
-The tests cover freight math, recommendation selection, AI fallback, and Redis/DB fallback behavior.
+Run the Python import check:
 
-## Folder Structure
+```bash
+cd services/ai-recommendation-service
+python -c "from app.main import app; print(app.title)"
+```
+
+## CI
+
+GitHub Actions runs:
+
+- .NET restore, build, and test
+- Docker Compose config validation and image build
+- Python dependency install and FastAPI app import check
+
+Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+
+## AWS Deployment Status
+
+The backend MVP and AWS deployment preparation are complete. AWS ECS Fargate is the primary deployment path.
+
+AWS production planning uses:
+
+- ECR for service images
+- ECS Fargate for Auth, Quote, and AI containers
+- Application Load Balancer for `/auth/*`, `/quotes/*`, and `/ai/*` routing
+- RDS PostgreSQL for managed relational storage
+- ElastiCache Redis for managed caching
+- AWS Secrets Manager for JWT secrets, database connection strings, Redis connection strings, and optional AI provider keys
+- CloudWatch Logs for centralized logging
+- IAM roles scoped to each service
+
+Deployment docs:
+
+- [AWS deployment plan](docs/aws-deployment.md)
+- [AWS environment matrix](docs/aws-env-matrix.md)
+- [ECS task definition notes](docs/ecs-task-definition-notes.md)
+- Optional alternative: [Cloud Run deployment guide](docs/cloud-run-deployment.md)
+- Optional alternative: [Cloud environment matrix](docs/cloud-env-matrix.md)
+
+## Security And Config
+
+`.env.example` is a template for local development. `.env` is ignored and must not be committed.
+
+Real secrets and API keys should be stored only in a local `.env` file or in cloud secret managers. AWS deployment should use ECS task environment variables for non-secret settings and AWS Secrets Manager for sensitive values.
+
+If a real secret is ever pushed to Git, rotate or revoke it with the provider. Removing it from the latest commit is not enough because Git history may retain it.
+
+## Repository Layout
 
 ```text
 repo-root/
@@ -219,6 +223,7 @@ repo-root/
 ├── docker-compose.yml
 ├── docs/
 ├── reverse-proxy/
+├── scripts/
 ├── services/
 │   ├── auth-service/
 │   ├── quote-service/
@@ -228,33 +233,6 @@ repo-root/
     └── contracts/
 ```
 
-## Production Notes
+## Interview Positioning
 
-Recommended AWS deployment path:
-
-- ECS Fargate for Auth, Quote, and AI service containers
-- ECR for container images
-- Application Load Balancer for path-based routing
-- RDS PostgreSQL for managed relational storage
-- ElastiCache Redis for managed cache
-- AWS Secrets Manager for JWT secrets, database URLs, Redis URLs, and optional AI provider keys
-- CloudWatch Logs for centralized logs
-- IAM roles and policies for service permissions
-
-Low-cost AWS-compatible option:
-
-- ECS Fargate and ECR for containers
-- RDS PostgreSQL or Neon/Supabase PostgreSQL
-- ElastiCache Redis or Upstash Redis
-- AWS Secrets Manager for secrets
-- Application Load Balancer for public routing
-
-GCP Cloud Run remains documented as an optional simpler container deployment path in [docs/cloud-run-deployment.md](docs/cloud-run-deployment.md).
-
-## Interview Explanation
-
-FreightRate AI demonstrates a practical backend system for logistics quote comparison. Pricing is deterministic and auditable: the Quote Service owns volumetric weight, chargeable weight, carrier rules, surcharges, GST, ETA comparison, and recommendation selection. AI is intentionally isolated as an explanation layer so it cannot change money values or business decisions.
-
-Redis is used as a performance optimization for read-heavy carrier, zone, and rate-rule lookups. PostgreSQL remains the source of truth, and Quote Service falls back to the database if Redis is unavailable. JWTs are issued by Auth Service and validated locally by Quote Service, which avoids a network call on every quote request. For production, the shared-secret JWT setup can evolve to asymmetric signing keys.
-
-ECS Fargate is a strong fit because each service is independently containerized, stateless at the API layer, and can run without managing servers. The local Nginx reverse proxy maps cleanly to AWS Application Load Balancer listener rules for production-style path-based routing.
+FreightRate AI demonstrates backend system design for logistics pricing: deterministic pricing, role-based auth, user-scoped history, cache fallback, service boundaries, standard error contracts, CI, containerization, and AWS deployment planning. The AI layer is intentionally isolated so recommendation explanations can improve without risking pricing correctness.

@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Optional Cloud Run helper. Deploys images that already exist in Google Artifact Registry.
+#
+# Required environment variables:
+#   GCP_PROJECT_ID
+#   GCP_REGION                Example: asia-south1
+#
+# Required Secret Manager entries:
+#   jwt-secret
+#   auth-db-connection
+#   quote-db-connection
+#   redis-connection-string
+#
+# The AWS deployment path remains primary for this repository.
+
 if [[ -z "${GCP_PROJECT_ID:-}" ]]; then
   echo "GCP_PROJECT_ID is required." >&2
   exit 1

@@ -18,9 +18,11 @@ Quote Service validates JWTs locally using the Auth Service issuer, audience, an
 
 For production, asymmetric JWT signing is preferred: Auth signs tokens with a private key, and other services validate with a public key.
 
-## Why Cloud Run
+## Why ECS Fargate
 
-Cloud Run fits because the services are containerized, stateless at the API layer, and independently deployable. It also supports low-cost scaling for demo and MVP workloads.
+ECS Fargate fits because each API service is containerized, stateless at the application layer, and independently deployable without managing servers. The local Nginx reverse proxy maps naturally to Application Load Balancer path-based routing in AWS.
+
+Cloud Run is documented as an optional alternative for simple container hosting, but AWS ECS Fargate is the primary deployment path for this repository.
 
 ## Balanced Recommendation
 
@@ -48,5 +50,5 @@ Quote Service catches AI failures, timeouts, and invalid responses. It falls bac
 - Redis hit/miss rate and failures
 - AI service latency and fallback rate
 - 401/403 spikes
-- Nginx/API gateway 5xx responses
-- Cloud Run cold starts and memory usage
+- Nginx or Application Load Balancer 5xx responses
+- ECS task restarts, CPU, memory, and service health
