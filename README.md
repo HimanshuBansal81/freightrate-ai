@@ -13,7 +13,8 @@ FreightRate AI is a backend MVP built as a small service-oriented monorepo:
 - Redis: read-through cache for active carriers, pincode-zone mapping, and lane rate rules.
 - Nginx: local path-based reverse proxy.
 - Docker Compose: local runtime.
-- Google Cloud Run: planned container deployment target.
+- AWS ECS Fargate: recommended primary cloud deployment target.
+- Google Cloud Run: optional alternative container deployment target.
 
 ```mermaid
 flowchart LR
@@ -83,7 +84,7 @@ Edit `.env` locally:
 
 `.env` is ignored and must never be committed. Real secrets and API keys should never be stored in Git.
 
-Cloud deployment does not use committed env files. Configure runtime settings with Cloud Run environment variables and store secrets in Google Secret Manager.
+Cloud deployment does not use committed env files. For AWS, configure runtime settings with ECS task environment variables and store secrets in AWS Secrets Manager. The GCP Cloud Run alternative uses Cloud Run environment variables and Google Secret Manager.
 
 If any real secret or API key was ever pushed to GitHub, rotate or revoke it. Removing it from the latest commit is not enough because Git history may retain it.
 
@@ -112,14 +113,23 @@ Direct service ports are also published:
 
 ## Cloud Deployment Status
 
-The local backend MVP is complete and Cloud Run deployment is documented. Real deployment still requires a Google Cloud project, managed PostgreSQL, managed Redis, and Secret Manager setup.
+The local backend MVP is complete and AWS ECS Fargate is the recommended primary deployment path. Real AWS deployment still requires an AWS account, ECR repositories, ECS Fargate services, an Application Load Balancer, RDS PostgreSQL, managed Redis, Secrets Manager, CloudWatch Logs, and IAM setup.
 
-No production secrets are stored in Git. Use Cloud Run environment variables for non-secret configuration and Google Secret Manager for JWT secrets, database connection strings, Redis connection strings, and optional AI provider keys.
+No production secrets are stored in Git. Use ECS task environment variables for non-secret configuration and AWS Secrets Manager for JWT secrets, database connection strings, Redis connection strings, and optional AI provider keys.
+
+Local Docker Compose uses Nginx for path-based reverse proxy routing at `localhost:8080`. AWS deployment should use an Application Load Balancer for managed path-based routing:
+
+- `/auth/*` -> Auth Service
+- `/quotes/*` -> Quote Service
+- `/ai/*` -> AI Recommendation Service
 
 Deployment references:
 
-- [Cloud Run deployment guide](docs/cloud-run-deployment.md)
-- [Cloud environment variable matrix](docs/cloud-env-matrix.md)
+- [AWS ECS Fargate deployment plan](docs/aws-deployment.md)
+- [AWS environment matrix](docs/aws-env-matrix.md)
+- [ECS task definition notes](docs/ecs-task-definition-notes.md)
+- Optional GCP alternative: [Cloud Run deployment guide](docs/cloud-run-deployment.md)
+- Optional GCP alternative: [Cloud environment variable matrix](docs/cloud-env-matrix.md)
 
 ## Auth Flow
 
@@ -220,24 +230,26 @@ repo-root/
 
 ## Production Notes
 
-Low-cost deployment path:
+Recommended AWS deployment path:
 
-- Cloud Run for Auth, Quote, and AI service containers
-- Artifact Registry for container images
-- Secret Manager for JWT secrets, database URLs, Redis URLs, and optional AI provider keys
-- Cloud Logging for centralized logs
-- Neon or Supabase for PostgreSQL
-- Upstash Redis for cache
+- ECS Fargate for Auth, Quote, and AI service containers
+- ECR for container images
+- Application Load Balancer for path-based routing
+- RDS PostgreSQL for managed relational storage
+- ElastiCache Redis for managed cache
+- AWS Secrets Manager for JWT secrets, database URLs, Redis URLs, and optional AI provider keys
+- CloudWatch Logs for centralized logs
+- IAM roles and policies for service permissions
 
-Full GCP deployment path:
+Low-cost AWS-compatible option:
 
-- Cloud Run
-- Artifact Registry
-- Secret Manager
-- Cloud SQL for PostgreSQL
-- Memorystore for Redis
-- API Gateway or HTTPS Load Balancer for routing
-- Cloud Logging and Cloud Monitoring
+- ECS Fargate and ECR for containers
+- RDS PostgreSQL or Neon/Supabase PostgreSQL
+- ElastiCache Redis or Upstash Redis
+- AWS Secrets Manager for secrets
+- Application Load Balancer for public routing
+
+GCP Cloud Run remains documented as an optional simpler container deployment path in [docs/cloud-run-deployment.md](docs/cloud-run-deployment.md).
 
 ## Interview Explanation
 
@@ -245,4 +257,4 @@ FreightRate AI demonstrates a practical backend system for logistics quote compa
 
 Redis is used as a performance optimization for read-heavy carrier, zone, and rate-rule lookups. PostgreSQL remains the source of truth, and Quote Service falls back to the database if Redis is unavailable. JWTs are issued by Auth Service and validated locally by Quote Service, which avoids a network call on every quote request. For production, the shared-secret JWT setup can evolve to asymmetric signing keys.
 
-Cloud Run is a strong fit because each service is independently containerized, stateless at the API layer, and can scale to zero for low-cost environments.
+ECS Fargate is a strong fit because each service is independently containerized, stateless at the API layer, and can run without managing servers. The local Nginx reverse proxy maps cleanly to AWS Application Load Balancer listener rules for production-style path-based routing.
