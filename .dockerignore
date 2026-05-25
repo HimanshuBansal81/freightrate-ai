@@ -1,0 +1,16 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+
+**/bin/
+**/obj/
+**/__pycache__/
+**/*.py[cod]
+
+.DS_Store
+.vscode/
+.idea/
+
+docker-compose.override.yml

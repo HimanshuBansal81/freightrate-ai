@@ -1,7 +1,8 @@
 services:
   auth-service:
     build:
-      context: ./services/auth-service
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     ports:
       - "5001:8080"
     environment:
@@ -18,7 +19,8 @@ services:
 
   quote-service:
     build:
-      context: ./services/quote-service
+      context: .
+      dockerfile: services/quote-service/Dockerfile
     ports:
       - "5002:8080"
     environment:
@@ -38,7 +40,8 @@ services:
 
   ai-recommendation-service:
     build:
-      context: ./services/ai-recommendation-service
+      context: .
+      dockerfile: services/ai-recommendation-service/Dockerfile
     ports:
       - "8000:8000"
     environment:

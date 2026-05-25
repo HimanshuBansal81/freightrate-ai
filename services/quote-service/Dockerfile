@@ -1,11 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY quote-service.csproj .
-RUN dotnet restore
+COPY services/quote-service/quote-service.csproj services/quote-service/
+RUN dotnet restore services/quote-service/quote-service.csproj
 
-COPY . .
-RUN dotnet publish -c Release -o /app/publish
+COPY services/quote-service/. services/quote-service/
+RUN dotnet publish services/quote-service/quote-service.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app

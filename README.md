@@ -110,6 +110,17 @@ Direct service ports are also published:
 - AI Recommendation Service: `http://localhost:8000`
 - Nginx gateway: `http://localhost:8080`
 
+## Cloud Deployment Status
+
+The local backend MVP is complete and Cloud Run deployment is documented. Real deployment still requires a Google Cloud project, managed PostgreSQL, managed Redis, and Secret Manager setup.
+
+No production secrets are stored in Git. Use Cloud Run environment variables for non-secret configuration and Google Secret Manager for JWT secrets, database connection strings, Redis connection strings, and optional AI provider keys.
+
+Deployment references:
+
+- [Cloud Run deployment guide](docs/cloud-run-deployment.md)
+- [Cloud environment variable matrix](docs/cloud-env-matrix.md)
+
 ## Auth Flow
 
 Register a Shipper:
