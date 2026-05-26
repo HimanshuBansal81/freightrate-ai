@@ -1,6 +1,22 @@
 # FreightRate AI
 
+[![CI](https://github.com/HimanshuBansal81/freightrate-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/HimanshuBansal81/freightrate-ai/actions/workflows/ci.yml)
+
 Cloud-native multi-carrier freight quote backend that calculates deterministic freight prices and uses AI only to explain recommendations.
+
+## Demo & Review Guide
+
+FreightRate AI can be reviewed through the README, docs, API examples, and screenshot checklist without requiring recruiters or interviewers to run Docker locally.
+
+Technical reviewers can run the full backend stack locally with Docker Compose. No real API keys are required for the demo because `AI_PROVIDER=none` uses fallback explanation mode. Real AI provider keys are optional and must be configured only in a local `.env` file or cloud secrets.
+
+Recommended review links:
+
+- [Demo guide](docs/demo-guide.md)
+- [Copy-paste API requests](docs/demo-requests.md)
+- [Architecture](docs/architecture.md)
+- [AWS deployment guide](docs/aws-deployment.md)
+- [GitHub Actions CI](https://github.com/HimanshuBansal81/freightrate-ai/actions/workflows/ci.yml)
 
 ## Architecture
 
@@ -44,7 +60,7 @@ flowchart LR
 - Zone-based pricing, fuel surcharge, and GST
 - Cheapest, Fastest, and Balanced recommendation modes
 - Redis caching with PostgreSQL fallback
-- AI-generated recommendation explanation with deterministic fallback
+- Recommendation explanations with deterministic fallback
 - Standard API error response contract
 - Unit tests for quote logic, recommendation selection, Redis fallback, and AI fallback
 - GitHub Actions CI for .NET build/test, Docker Compose validation, and Python import checks
@@ -63,19 +79,17 @@ Prerequisites:
 - .NET 8 SDK
 - `curl` or Postman
 
-Create a local environment file from the tracked template:
+Quickstart:
 
 ```bash
 cp .env.example .env
+docker compose up --build -d
+curl http://localhost:8080/auth/health
+curl http://localhost:8080/quotes/health
+curl http://localhost:8080/ai/health
 ```
 
 Set `JWT_SECRET` in `.env` to a local development value of at least 32 characters. Keep `AI_PROVIDER=none` unless testing a real AI provider locally.
-
-Start the stack from the repository root:
-
-```bash
-docker compose up --build -d
-```
 
 Local Docker Compose uses Nginx as a path-based reverse proxy:
 
@@ -157,6 +171,21 @@ Other useful endpoints:
 - `GET /quotes/api/quotes/{id}`
 - `GET /quotes/api/admin/rate-rules`
 - `POST /ai/api/recommendations/explain`
+
+Shortened sample quote response:
+
+```json
+{
+  "recommendedCarrier": "Xpressbees",
+  "recommendedAmount": 166.14,
+  "aiExplanation": "Xpressbees is recommended because it best matches your Balanced preference based on the calculated price and delivery time.",
+  "options": [
+    { "carrier": "Xpressbees", "totalAmount": 166.14, "estimatedDeliveryDays": 5 },
+    { "carrier": "Delhivery", "totalAmount": 192.95, "estimatedDeliveryDays": 4 },
+    { "carrier": "BlueDart", "totalAmount": 284.97, "estimatedDeliveryDays": 2 }
+  ]
+}
+```
 
 ## Testing
 
