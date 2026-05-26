@@ -1,0 +1,188 @@
+{
+  "info": {
+    "name": "FreightRate AI",
+    "description": "Local demo collection for FreightRate AI backend APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "quoteId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health - Auth",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/auth/health"
+      }
+    },
+    {
+      "name": "Health - Quote",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/quotes/health"
+      }
+    },
+    {
+      "name": "Health - AI",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/ai/health"
+      }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Demo Shipper\",\n  \"email\": \"demo.shipper@example.com\",\n  \"password\": \"Passw0rd!\",\n  \"role\": \"Shipper\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/api/auth/register"
+      }
+    },
+    {
+      "name": "Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const json = pm.response.json();",
+              "  if (json.token) {",
+              "    pm.collectionVariables.set('token', json.token);",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"demo.shipper@example.com\",\n  \"password\": \"Passw0rd!\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/api/auth/login"
+      }
+    },
+    {
+      "name": "Compare Quote",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code >= 200 && pm.response.code < 300) {",
+              "  const json = pm.response.json();",
+              "  if (json.quoteId) {",
+              "    pm.collectionVariables.set('quoteId', String(json.quoteId));",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"originPincode\": \"110001\",\n  \"destinationPincode\": \"560001\",\n  \"actualWeightKg\": 8,\n  \"lengthCm\": 40,\n  \"widthCm\": 30,\n  \"heightCm\": 25,\n  \"preference\": \"Balanced\"\n}"
+        },
+        "url": "{{baseUrl}}/quotes/api/quotes/compare"
+      }
+    },
+    {
+      "name": "Quote History",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/quotes/api/quotes/history"
+      }
+    },
+    {
+      "name": "Quote By ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/quotes/api/quotes/{{quoteId}}"
+      }
+    },
+    {
+      "name": "Carriers",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/quotes/api/carriers"
+      }
+    },
+    {
+      "name": "Zones",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/quotes/api/zones"
+      }
+    },
+    {
+      "name": "AI Explain Recommendation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"preference\": \"Balanced\",\n  \"recommendedCarrier\": \"Xpressbees\",\n  \"cheapestCarrier\": \"Xpressbees\",\n  \"fastestCarrier\": \"BlueDart\",\n  \"options\": [\n    {\n      \"carrier\": \"Xpressbees\",\n      \"amount\": 166.14,\n      \"etaDays\": 5\n    },\n    {\n      \"carrier\": \"Delhivery\",\n      \"amount\": 192.95,\n      \"etaDays\": 4\n    },\n    {\n      \"carrier\": \"BlueDart\",\n      \"amount\": 284.97,\n      \"etaDays\": 2\n    }\n  ]\n}"
+        },
+        "url": "{{baseUrl}}/ai/api/recommendations/explain"
+      }
+    }
+  ]
+}
