@@ -99,6 +99,32 @@ Redis:
 
    Use `POST /ai/api/recommendations/explain` to confirm the explanation service works independently.
 
+## Generating Demo Proof Locally
+
+The demo proof scripts require the local Docker Compose containers to be running. They do not start Docker automatically.
+
+Start services:
+
+```bash
+docker compose up --build -d
+```
+
+Generate sanitized API outputs:
+
+```bash
+./scripts/generate-demo-outputs.sh
+```
+
+Generated files are written to [demo-outputs](demo-outputs/). Review them before committing. JWT tokens are redacted as `<REDACTED>`, and Authorization headers are not saved.
+
+Verify the same API flow without writing files:
+
+```bash
+./scripts/verify-demo-flow.sh
+```
+
+Screenshots should be taken manually from terminal, Postman, or GitHub Actions. Do not expose JWT tokens, secrets, or API keys in screenshots.
+
 ## What Reviewers Should Notice
 
 - Pricing is deterministic and calculated in the Quote Service from seeded rate rules.
@@ -108,4 +134,3 @@ Redis:
 - Standard error responses make API failures predictable.
 - CI runs .NET build/test, Docker Compose validation, and Python AI import checks.
 - AWS deployment docs cover ECS Fargate, ALB routing, RDS PostgreSQL, ElastiCache Redis, Secrets Manager, CloudWatch, and IAM.
-
