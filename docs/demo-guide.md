@@ -125,6 +125,28 @@ Verify the same API flow without writing files:
 
 Screenshots should be taken manually from terminal, Postman, or GitHub Actions. Do not expose JWT tokens, secrets, or API keys in screenshots.
 
+## Visual Demo Proof
+
+The repository includes screenshots under [demo-screenshots](demo-screenshots/) showing:
+
+- CI passing
+- Docker services running
+- health endpoints
+- end-to-end API flow
+- quote comparison response
+- quote history
+- AI explanation endpoint
+
+![GitHub Actions CI green](demo-screenshots/01-github-actions-ci-green.png)
+
+![Docker containers running](demo-screenshots/02-docker-containers-running.png)
+
+![Quote compare response](demo-screenshots/08-quote-compare-response.png)
+
+![AI explanation response](demo-screenshots/10-ai-explanation-response.png)
+
+See the full screenshot index in [demo-screenshots/README.md](demo-screenshots/README.md).
+
 ## What Reviewers Should Notice
 
 - Pricing is deterministic and calculated in the Quote Service from seeded rate rules.

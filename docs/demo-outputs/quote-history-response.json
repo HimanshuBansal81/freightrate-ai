@@ -1,0 +1,46 @@
+[
+  {
+    "quoteId": 13,
+    "originPincode": "110001",
+    "destinationPincode": "560001",
+    "originZone": "North",
+    "destinationZone": "South",
+    "actualWeightKg": 8.00,
+    "volumetricWeightKg": 6.00,
+    "chargeableWeightKg": 8.00,
+    "preference": "Balanced",
+    "recommendedCarrier": "Xpressbees",
+    "recommendedAmount": 166.14,
+    "aiExplanation": "Xpressbees is recommended because it best matches your Balanced preference based on the calculated price and delivery time.",
+    "createdAt": "2026-05-27T09:42:57.937617Z",
+    "options": [
+      {
+        "carrier": "Xpressbees",
+        "serviceType": "Surface",
+        "baseFreight": 128.00,
+        "fuelSurcharge": 12.80,
+        "gst": 25.34,
+        "totalAmount": 166.14,
+        "estimatedDeliveryDays": 5
+      },
+      {
+        "carrier": "Delhivery",
+        "serviceType": "Surface",
+        "baseFreight": 146.00,
+        "fuelSurcharge": 17.52,
+        "gst": 29.43,
+        "totalAmount": 192.95,
+        "estimatedDeliveryDays": 4
+      },
+      {
+        "carrier": "BlueDart",
+        "serviceType": "Express",
+        "baseFreight": 210.00,
+        "fuelSurcharge": 31.50,
+        "gst": 43.47,
+        "totalAmount": 284.97,
+        "estimatedDeliveryDays": 2
+      }
+    ]
+  }
+]

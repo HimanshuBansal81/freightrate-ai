@@ -14,9 +14,18 @@ Recommended review links:
 
 - [Demo guide](docs/demo-guide.md)
 - [Copy-paste API requests](docs/demo-requests.md)
+- [View demo screenshots](docs/demo-screenshots/README.md)
 - [Architecture](docs/architecture.md)
 - [AWS deployment guide](docs/aws-deployment.md)
 - [GitHub Actions CI](https://github.com/HimanshuBansal81/freightrate-ai/actions/workflows/ci.yml)
+
+## Visual Proof
+
+Screenshots are available in [docs/demo-screenshots](docs/demo-screenshots/). They show CI, Docker Compose, health checks, API flow, quote comparison, and AI explanation so reviewers can understand the running behavior without setting up the project locally.
+
+![GitHub Actions CI green](docs/demo-screenshots/01-github-actions-ci-green.png)
+
+![Quote compare response](docs/demo-screenshots/08-quote-compare-response.png)
 
 ## Architecture
 
