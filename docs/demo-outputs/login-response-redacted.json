@@ -1,0 +1,9 @@
+{
+  "token": "<REDACTED>",
+  "email": "demo.shipper+20260527151257@example.com",
+  "fullName": "Demo Shipper 20260527151257",
+  "roles": [
+    "Shipper"
+  ],
+  "expiresAt": "2026-05-27T10:42:57.9088263Z"
+}
