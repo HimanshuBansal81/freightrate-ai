@@ -10,7 +10,8 @@ cp .env.example .env
 
 Edit `.env` locally and set `JWT_SECRET` to a local development value of at least 32 characters. Never commit `.env`.
 
-`AI_PROVIDER=none` runs the project in fallback explanation mode without real API keys. Add real provider keys only to your local `.env` file or a cloud secret manager, never to source control.
+`AI_PROVIDER=none` runs the project in fallback explanation mode without real API keys. Add real provider keys only
+to your local `.env` file or a cloud secret manager, never to source control.
 
 Start services from the repository root:
 
@@ -38,7 +39,8 @@ Check config:
 docker compose config
 ```
 
-If any real secret was pushed to GitHub, rotate or revoke it immediately from the provider dashboard. Removing it from the latest commit is not enough because it may remain in Git history.
+If any real secret was pushed to GitHub, rotate or revoke it immediately from the provider dashboard. Removing it from
+the latest commit is not enough because it may remain in Git history.
 
 ## Published Ports
 

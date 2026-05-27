@@ -1,6 +1,7 @@
 # AWS ECS Fargate Deployment Plan
 
-FreightRate AI is prepared for an AWS-first container deployment, but this repository does not deploy infrastructure automatically. Do not commit production `.env` files, database URLs, Redis URLs, JWT secrets, or AI provider keys.
+FreightRate AI is prepared for an AWS-first container deployment, but this repository does not deploy infrastructure
+automatically. Do not commit production `.env` files, database URLs, Redis URLs, JWT secrets, or AI provider keys.
 
 ## Architecture Overview
 
@@ -97,7 +98,8 @@ The script builds from the repository root using these Dockerfile paths:
 
 ## 3. Provision RDS PostgreSQL
 
-Create an RDS PostgreSQL instance or cluster with private networking where possible. The Auth and Quote services can share one database server while using separate databases, matching the local Docker Compose setup:
+Create an RDS PostgreSQL instance or cluster with private networking where possible. The Auth and Quote services can
+share one database server while using separate databases, matching the local Docker Compose setup:
 
 - `freightrate_auth`
 - `freightrate_quote`
@@ -234,7 +236,7 @@ Avoid broad `secretsmanager:*` policies. Scope permissions to explicit secret AR
 
 ## GCP Alternative
 
-The existing Cloud Run documentation remains useful for a simpler container deployment path:
+Cloud Run is documented as an optional alternative container deployment path:
 
 - [Cloud Run deployment guide](cloud-run-deployment.md)
-- [GCP deployment notes](gcp-deployment.md)
+- [Cloud environment matrix](cloud-env-matrix.md)

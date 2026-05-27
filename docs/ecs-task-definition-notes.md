@@ -12,7 +12,8 @@ This keeps scaling, deployment, health checks, logs, and permissions independent
 
 - Auth Service uses container port `8080`.
 - Quote Service uses container port `8080`.
-- AI Recommendation Service supports `PORT` and defaults to `8000` locally. For ECS, set `PORT=8080` and configure the task/container/target group port as `8080`, or document and consistently use another configured port.
+- AI Recommendation Service supports `PORT` and defaults to `8000` locally. For ECS, set `PORT=8080` and configure
+  the task/container/target group port as `8080`, or document and consistently use another configured port.
 
 ## Secrets
 
@@ -23,11 +24,13 @@ Inject sensitive values from AWS Secrets Manager through the ECS task definition
 - `Redis__ConnectionString`
 - Optional AI provider keys such as `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `AZURE_OPENAI_API_KEY`
 
-Use normal environment variables for non-secret settings such as `ASPNETCORE_ENVIRONMENT`, `ASPNETCORE_URLS`, `Jwt__Issuer`, `Jwt__Audience`, `Jwt__ExpiryMinutes`, timeouts, `PORT`, `AI_PROVIDER`, and `AI_MODEL`.
+Use normal environment variables for non-secret settings such as `ASPNETCORE_ENVIRONMENT`, `ASPNETCORE_URLS`,
+`Jwt__Issuer`, `Jwt__Audience`, `Jwt__ExpiryMinutes`, timeouts, `PORT`, `AI_PROVIDER`, and `AI_MODEL`.
 
 ## Logging
 
-Configure the ECS `awslogs` log driver for each container so application logs go to CloudWatch Logs. Use separate log groups or stream prefixes per service to keep troubleshooting simple:
+Configure the ECS `awslogs` log driver for each container so application logs go to CloudWatch Logs. Use separate log
+groups or stream prefixes per service to keep troubleshooting simple:
 
 - `/ecs/freightrate-ai/auth-service`
 - `/ecs/freightrate-ai/quote-service`

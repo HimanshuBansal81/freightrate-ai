@@ -57,4 +57,5 @@ Google Cloud Run is documented separately as an optional alternative container d
 
 ## Data Ownership
 
-Auth Service owns users, roles, and password hashes. Quote Service owns carriers, zones, rate rules, quote requests, and quote options. The AI service owns no source-of-truth business data.
+Auth Service owns users, roles, and password hashes. Quote Service owns carriers, zones, rate rules, quote requests,
+and quote options. The AI service owns no source-of-truth business data.

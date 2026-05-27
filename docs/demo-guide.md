@@ -1,18 +1,25 @@
 # Demo Guide
 
-FreightRate AI is a backend MVP for comparing freight shipment quotes across multiple logistics carriers. It demonstrates deterministic pricing, service boundaries, authentication, persistence, caching, CI, and cloud deployment readiness.
+FreightRate AI is a backend MVP for comparing freight shipment quotes across multiple logistics carriers. It
+demonstrates deterministic pricing, service boundaries, authentication, persistence, caching, CI, and cloud
+deployment readiness.
 
-This guide is written for recruiters, interviewers, and technical reviewers who want to understand the project quickly. The project can be reviewed through docs and API examples without running Docker locally. Reviewers who want to test the full flow can use Docker Compose.
+This guide helps technical reviewers understand the project quickly. The repository includes docs, API examples,
+screenshots, and sanitized sample outputs for review. Anyone who wants to test the full flow can run the stack with
+Docker Compose.
 
 ## Project Purpose
 
-FreightRate AI helps a shipper compare carrier options for a delivery lane. Given origin and destination pincodes, package dimensions, actual weight, and a preference such as `Balanced`, the backend calculates quote options from seeded carrier rate rules and recommends the best carrier.
+FreightRate AI helps a shipper compare carrier options for a delivery lane. Given origin and destination pincodes,
+package dimensions, actual weight, and a preference such as `Balanced`, the backend calculates quote options from
+seeded carrier rate rules and recommends the best carrier.
 
 The AI service does not calculate prices. It only explains the recommendation already selected by the Quote Service.
 
 ## Problem It Solves
 
-Freight pricing is often hard to compare because each carrier can have different rate cards, delivery speeds, surcharges, and serviceability rules. This project centralizes the comparison workflow:
+Freight pricing is often hard to compare because each carrier can have different rate cards, delivery speeds,
+surcharges, and serviceability rules. This project centralizes the comparison workflow:
 
 - Validate the requested lane and package input.
 - Calculate volumetric and chargeable weight.
@@ -115,7 +122,7 @@ Generate sanitized API outputs:
 ./scripts/generate-demo-outputs.sh
 ```
 
-Generated files are written to [demo-outputs](demo-outputs/). Review them before committing. JWT tokens are redacted as `<REDACTED>`, and Authorization headers are not saved.
+Files are written to [demo-outputs](demo-outputs/). Review them before committing. JWT tokens are redacted as `<REDACTED>`, and Authorization headers are not saved.
 
 Verify the same API flow without writing files:
 
@@ -131,10 +138,10 @@ The repository includes screenshots under [demo-screenshots](demo-screenshots/) 
 
 - CI passing
 - Docker services running
-- health endpoints
-- end-to-end API flow
-- quote comparison response
-- quote history
+- Health endpoints
+- End-to-end API flow
+- Quote comparison response
+- Quote history
 - AI explanation endpoint
 
 ![GitHub Actions CI green](demo-screenshots/01-github-actions-ci-green.png)

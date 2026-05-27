@@ -2,15 +2,19 @@
 
 ## Project Pitch
 
-FreightRate AI is a cloud-native backend system that compares freight quotes across carriers. It calculates pricing deterministically using pincode-zone mapping, volumetric weight, chargeable weight, carrier rate rules, fuel surcharge, GST, ETA, and user preference. AI is used only to explain the selected recommendation.
+FreightRate AI is a cloud-native backend system that compares freight quotes across carriers. It calculates pricing
+deterministically using pincode-zone mapping, volumetric weight, chargeable weight, carrier rate rules, fuel surcharge,
+GST, ETA, and user preference. AI is used only to explain the selected recommendation.
 
 ## Why AI Is Separate
 
-AI is isolated in its own FastAPI service so pricing remains deterministic, auditable, and testable. The Quote Service decides the recommendation. The AI service only explains that decision.
+AI is isolated in its own FastAPI service so pricing remains deterministic, auditable, and testable. The Quote Service
+decides the recommendation. The AI service only explains that decision.
 
 ## Why Redis
 
-Quote calculations repeatedly read active carriers, pincode-zone mappings, and lane rate rules. Redis reduces read pressure and latency for those reference lookups. If Redis fails, Quote Service logs a warning and uses PostgreSQL.
+Quote calculations repeatedly read active carriers, pincode-zone mappings, and lane rate rules. Redis reduces read
+pressure and latency for those reference lookups. If Redis fails, Quote Service logs a warning and uses PostgreSQL.
 
 ## Why JWT Local Validation
 
@@ -20,7 +24,9 @@ For production, asymmetric JWT signing is preferred: Auth signs tokens with a pr
 
 ## Why ECS Fargate
 
-ECS Fargate fits because each API service is containerized, stateless at the application layer, and independently deployable without managing servers. The local Nginx reverse proxy maps naturally to Application Load Balancer path-based routing in AWS.
+ECS Fargate fits because each API service is containerized, stateless at the application layer, and independently
+deployable without managing servers. The local Nginx reverse proxy maps naturally to Application Load Balancer
+path-based routing in AWS.
 
 Cloud Run is documented as an optional alternative for simple container hosting, but AWS ECS Fargate is the primary deployment path for this repository.
 
