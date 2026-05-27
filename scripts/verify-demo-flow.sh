@@ -136,7 +136,7 @@ printf '%s\n' "$history_response"
 history_count="$(printf '%s\n' "$history_response" | jq 'length')"
 
 if [[ "$history_count" -lt 1 ]]; then
-  echo "FAIL: quote history did not include the generated quote." >&2
+  echo "FAIL: quote history did not include the new quote." >&2
   exit 1
 fi
 

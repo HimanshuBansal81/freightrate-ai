@@ -9,7 +9,7 @@ Before committing refreshed output files:
 - Redact JWT tokens and any other secrets.
 - Do not include `Authorization` headers.
 - Do not include real API keys or cloud secrets.
-- Review the generated JSON files for sensitive values.
+- Review the refreshed JSON files for sensitive values.
 
 Generate fresh outputs from the repository root:
 

@@ -287,10 +287,3 @@ repo-root/
 └── shared/
     └── contracts/
 ```
-
-## Interview Positioning
-
-FreightRate AI demonstrates backend system design for logistics pricing: deterministic pricing, role-based auth,
-user-scoped history, cache fallback, service boundaries, standard error contracts, CI, containerization, and AWS
-deployment planning. The AI layer is intentionally isolated so recommendation explanations can improve without
-risking pricing correctness.
