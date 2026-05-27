@@ -8,6 +8,8 @@ BASE_URL=http://localhost:8080
 
 No real AI provider key is required when `AI_PROVIDER=none`.
 
+Screenshots for this flow are available in [demo-screenshots](demo-screenshots/).
+
 ## Health Checks
 
 ```bash
@@ -127,4 +129,3 @@ curl -sS -X POST "$BASE_URL/ai/api/recommendations/explain" \
     ]
   }'
 ```
-
