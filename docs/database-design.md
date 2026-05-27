@@ -33,7 +33,8 @@ Keeping them separate allows:
 
 ## Why CarrierRateRule Is Separate
 
-Carrier pricing changes over time and varies by lane. `CarrierRateRule` isolates rate-card data from carrier identity and quote history, making it easier to manage active rules, add lanes, and preserve historical quote outputs.
+Carrier pricing changes over time and varies by lane. `CarrierRateRule` isolates rate-card data from carrier identity
+and quote history, making it easier to manage active rules, add lanes, and preserve historical quote outputs.
 
 ## Current Seed Data
 

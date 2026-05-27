@@ -151,5 +151,4 @@ ai_payload='{
 request POST "${BASE_URL}/ai/api/recommendations/explain" "${OUTPUT_DIR}/ai-explanation-response.json" "$ai_payload"
 echo "Saved ${OUTPUT_DIR}/ai-explanation-response.json"
 
-echo "Done. Review ${OUTPUT_DIR} before committing generated outputs."
-
+echo "Done. Review ${OUTPUT_DIR} before committing refreshed outputs."

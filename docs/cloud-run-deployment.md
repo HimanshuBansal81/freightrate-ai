@@ -1,6 +1,9 @@
 # Cloud Run Deployment Preparation
 
-FreightRate AI is prepared for Google Cloud Run deployment, but this repository does not perform deployment automatically. Do not commit production `.env` files, database URLs, Redis URLs, JWT secrets, or AI provider keys.
+AWS ECS Fargate is the primary deployment path for this repository. Cloud Run is documented as an optional alternative
+container deployment path. This repository does not perform deployment automatically.
+
+Do not commit production `.env` files, database URLs, Redis URLs, JWT secrets, or AI provider keys.
 
 ## Prerequisites
 
@@ -17,8 +20,14 @@ FreightRate AI is prepared for Google Cloud Run deployment, but this repository 
 ```bash
 export GCP_PROJECT_ID="your-gcp-project-id"
 export GCP_REGION="asia-south1"
+
 gcloud config set project "$GCP_PROJECT_ID"
-gcloud services enable run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com logging.googleapis.com
+
+gcloud services enable \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  logging.googleapis.com
 ```
 
 `asia-south1` is a suggested region placeholder. Choose the region closest to your users and managed data services.
@@ -118,8 +127,15 @@ gcloud run deploy freightrate-auth-service \
   --region "$GCP_REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars ASPNETCORE_ENVIRONMENT=Production,ASPNETCORE_URLS=http://+:8080,Jwt__Issuer=FreightRateAI.Auth,Jwt__Audience=FreightRateAI.Services,Jwt__ExpiryMinutes=60 \
-  --set-secrets Jwt__Secret=jwt-secret:latest,ConnectionStrings__DefaultConnection=auth-db-connection:latest
+  --set-env-vars "\
+ASPNETCORE_ENVIRONMENT=Production,\
+ASPNETCORE_URLS=http://+:8080,\
+Jwt__Issuer=FreightRateAI.Auth,\
+Jwt__Audience=FreightRateAI.Services,\
+Jwt__ExpiryMinutes=60" \
+  --set-secrets "\
+Jwt__Secret=jwt-secret:latest,\
+ConnectionStrings__DefaultConnection=auth-db-connection:latest"
 ```
 
 Deploy the Quote service after the AI service URL is known:
@@ -130,8 +146,17 @@ gcloud run deploy freightrate-quote-service \
   --region "$GCP_REGION" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars ASPNETCORE_ENVIRONMENT=Production,ASPNETCORE_URLS=http://+:8080,Jwt__Issuer=FreightRateAI.Auth,Jwt__Audience=FreightRateAI.Services,AiService__BaseUrl="$AI_SERVICE_URL",AiService__TimeoutSeconds=3 \
-  --set-secrets Jwt__Secret=jwt-secret:latest,ConnectionStrings__DefaultConnection=quote-db-connection:latest,Redis__ConnectionString=redis-connection-string:latest
+  --set-env-vars "\
+ASPNETCORE_ENVIRONMENT=Production,\
+ASPNETCORE_URLS=http://+:8080,\
+Jwt__Issuer=FreightRateAI.Auth,\
+Jwt__Audience=FreightRateAI.Services,\
+AiService__BaseUrl=$AI_SERVICE_URL,\
+AiService__TimeoutSeconds=3" \
+  --set-secrets "\
+Jwt__Secret=jwt-secret:latest,\
+ConnectionStrings__DefaultConnection=quote-db-connection:latest,\
+Redis__ConnectionString=redis-connection-string:latest"
 ```
 
 If you enable a real AI provider, set `AI_PROVIDER` and the relevant provider configuration on `freightrate-ai-service`, then map API keys from Secret Manager.

@@ -33,4 +33,6 @@ Use this matrix when mapping local `.env` values to ECS task definition environm
 
 - The same `Jwt__Secret`, `Jwt__Issuer`, and `Jwt__Audience` values must be used by Auth and Quote so Quote can validate Auth-issued tokens.
 - Keep optional AI provider keys unset when `AI_PROVIDER=none`; the AI service will use its deterministic fallback explanation path.
-- `AiService__BaseUrl` should point to the AI service through internal service discovery or a private/internal route. If routing through the ALB, use the ALB URL with the `/ai` prefix only if the application route behavior has been verified.
+- `AiService__BaseUrl` should point to the AI service through internal service discovery or a private/internal route.
+  If routing through the ALB, use the ALB URL with the `/ai` prefix only if the application route behavior has been
+  verified.

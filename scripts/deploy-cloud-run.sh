@@ -44,13 +44,29 @@ gcloud run deploy freightrate-auth-service \
   --region "${GCP_REGION}" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars ASPNETCORE_ENVIRONMENT=Production,ASPNETCORE_URLS=http://+:8080,Jwt__Issuer=FreightRateAI.Auth,Jwt__Audience=FreightRateAI.Services,Jwt__ExpiryMinutes=60 \
-  --set-secrets Jwt__Secret=jwt-secret:latest,ConnectionStrings__DefaultConnection=auth-db-connection:latest
+  --set-env-vars "\
+ASPNETCORE_ENVIRONMENT=Production,\
+ASPNETCORE_URLS=http://+:8080,\
+Jwt__Issuer=FreightRateAI.Auth,\
+Jwt__Audience=FreightRateAI.Services,\
+Jwt__ExpiryMinutes=60" \
+  --set-secrets "\
+Jwt__Secret=jwt-secret:latest,\
+ConnectionStrings__DefaultConnection=auth-db-connection:latest"
 
 gcloud run deploy freightrate-quote-service \
   --image "${QUOTE_IMAGE}" \
   --region "${GCP_REGION}" \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars ASPNETCORE_ENVIRONMENT=Production,ASPNETCORE_URLS=http://+:8080,Jwt__Issuer=FreightRateAI.Auth,Jwt__Audience=FreightRateAI.Services,AiService__BaseUrl="${AI_SERVICE_URL}",AiService__TimeoutSeconds=3 \
-  --set-secrets Jwt__Secret=jwt-secret:latest,ConnectionStrings__DefaultConnection=quote-db-connection:latest,Redis__ConnectionString=redis-connection-string:latest
+  --set-env-vars "\
+ASPNETCORE_ENVIRONMENT=Production,\
+ASPNETCORE_URLS=http://+:8080,\
+Jwt__Issuer=FreightRateAI.Auth,\
+Jwt__Audience=FreightRateAI.Services,\
+AiService__BaseUrl=${AI_SERVICE_URL},\
+AiService__TimeoutSeconds=3" \
+  --set-secrets "\
+Jwt__Secret=jwt-secret:latest,\
+ConnectionStrings__DefaultConnection=quote-db-connection:latest,\
+Redis__ConnectionString=redis-connection-string:latest"

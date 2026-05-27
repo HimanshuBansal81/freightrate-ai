@@ -13,7 +13,7 @@ These screenshots show the FreightRate AI local backend MVP running through Dock
 | [07-demo-flow-04.png](07-demo-flow-04.png) | Step 4 of the end-to-end API demo flow |
 | [08-quote-compare-response.png](08-quote-compare-response.png) | Freight quote comparison returns carrier-wise pricing and recommendation |
 | [09-quote-history-response.png](09-quote-history-response.png) | Quote history is persisted and retrievable |
-| [10-ai-explanation-response.png](10-ai-explanation-response.png) | AI Recommendation Service returns recommendation explanation or fallback |
-| [11-demo-output-files.png](11-demo-output-files.png) | Sanitized demo output files are generated for review |
+| [10-ai-explanation-response.png](10-ai-explanation-response.png) | AI Recommendation Service returns a recommendation explanation or deterministic fallback |
+| [11-demo-output-files.png](11-demo-output-files.png) | Sanitized demo output files are available for review |
 
 Do not expose real tokens, API keys, passwords, or `.env` values in screenshots.
